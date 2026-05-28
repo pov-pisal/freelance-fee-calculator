@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelance Fee Split & Invoice Calculator | Stripe & PayPal Fee Calculator</title>
+    <meta name="description" content="Calculate Stripe and PayPal transaction fees instantly. Use Reverse Invoice Mode to determine exact client charges. Free, client-side calculator for freelancers.">
+    <meta name="keywords" content="freelance calculator, Stripe fees, PayPal fees, invoice calculator, transaction fees, payment processing">
+    <meta name="author" content="Freelance Tools">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .platform-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem;
+            border-radius: 0.75rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .platform-tab {
+            flex: 1;
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .platform-tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .platform-tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            background-color: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+            accent-color: #667eea;
+        }
+
+        .checkbox-item label {
+            cursor: pointer;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 3rem;
+            height: 1.75rem;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 1.75rem;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 1.3rem;
+            width: 1.3rem;
+            left: 0.2rem;
+            bottom: 0.225rem;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(1.25rem);
+        }
+
+        .output-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 1rem;
+            padding: 2rem;
+            color: white;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .output-item {
+            text-align: center;
+        }
+
+        .output-item.hidden {
+            display: none;
+        }
+
+        .output-label {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 0.75rem;
+            font-weight: 500;
+        }
+
+        .output-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .ad-placeholder {
+            background: #f3f4f6;
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin: 2rem 0;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .content-section {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        }
+
+        .content-section h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .content-section h3 {
+            color: #374151;
+            margin: 1.5rem 0 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .content-section p {
+            color: #374151;
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+
+        .content-section ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-section ul li {
+            color: #374151;
+            line-height: 1.75;
+            margin-bottom: 0.5rem;
+        }
+
+        .faq-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+            font-size: 1.05rem;
+        }
+
+        .faq-answer {
+            color: #374151;
+            line-height: 1.75;
+        }
+
+        .warning-message {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 0.875rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .warning-message.show {
+            display: block;
+        }
+
+        .copy-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .updated-badge {
+            display: inline-block;
+            background-color: #dbeafe;
+            color: #1e40af;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .content-section p {
+            color: #374151;
+            line-height: 1.75;
+            margin-bottom: 1rem;
+        }
+
+        .content-section ul li {
+            color: #374151;
+            line-height: 1.75;
+            margin-bottom: 0.5rem;
+        }
+
+        .content-section .faq-answer {
+            color: #374151;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.875rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .output-panel {
+                padding: 1.5rem;
+            }
+
+            .content-section {
+                padding: 1.5rem;
+            }
+
+            .platform-tab {
+                padding: 0.75rem 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .platform-tabs {
+                margin-bottom: 1.5rem;
+            }
+
+            .card {
+                padding: 1rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .output-item {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Freelance Fee Split & Invoice Calculator</h1>
+            <p>Calculate platform fees instantly and determine exact invoice amounts using reverse mode.</p>
+        </div>
+
+        <!-- AdSense Banner 1 (728x90) -->
+        <div class="ad-placeholder" style="height: 120px; margin-bottom: 2rem;">
+            <div>Ad Space: 728x90 Banner</div>
+            <div style="font-size: 0.75rem; margin-top: 0.5rem;">Google AdSense Banner Ad Placeholder</div>
+        </div>
+
+        <!-- Platform Selector -->
+        <div class="platform-tabs">
+            <button class="platform-tab active" data-platform="stripe">
+                <span style="font-size: 1.25rem; margin-right: 0.5rem;">💳</span>Stripe
+            </button>
+            <button class="platform-tab" data-platform="paypal">
+                <span style="font-size: 1.25rem; margin-right: 0.5rem;">⊗</span>PayPal
+            </button>
+        </div>
+
+        <!-- Calculator Card -->
+        <div class="card">
+            <div class="warning-message" id="warningMessage"></div>
+            <div class="updated-badge">💾 Fees updated for 2026</div>
+            <div class="form-group">
+                <label class="form-label">Amount (<span id="currencySymbol">$</span>)</label>
+                <input 
+                    type="number" 
+                    class="form-input" 
+                    id="amountInput" 
+                    value="1000" 
+                    min="0" 
+                    step="0.01"
+                    placeholder="Enter amount"
+                >
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Currency</label>
+                <select class="form-select" id="currencySelector">
+                    <option value="USD">USD - US Dollar ($)</option>
+                    <option value="EUR">EUR - Euro (€)</option>
+                    <option value="GBP">GBP - British Pound (£)</option>
+                    <option value="JPY">JPY - Japanese Yen (¥)</option>
+                    <option value="AUD">AUD - Australian Dollar (A$)</option>
+                    <option value="CAD">CAD - Canadian Dollar (C$)</option>
+                    <option value="INR">INR - Indian Rupee (₹)</option>
+                </select>
+            </div>
+
+            <!-- Mode Toggle -->
+            <div class="form-group">
+                <div class="toggle-switch">
+                    <span style="font-weight: 600; color: #1f2937;">
+                        <span id="modeLabel">Standard Mode</span>
+                    </span>
+                    <label class="switch">
+                        <input type="checkbox" id="modeToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <p style="font-size: 0.875rem; color: #6b7280; margin-top: 0.5rem;">
+                    <span id="modeDescription">Calculate your take-home from a gross payment</span>
+                </p>
+            </div>
+
+            <!-- Stripe Options -->
+            <div id="stripeOptions" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <select class="form-select" id="stripeLocation" data-option="location">
+                        <option value="domestic">Domestic/US (2.9%)</option>
+                        <option value="international">International (+1.5%)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input 
+                                type="checkbox" 
+                                id="stripeFX" 
+                                data-option="fx"
+                            >
+                            <label for="stripeFX">Currency Conversion (+1%)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input 
+                                type="checkbox" 
+                                id="stripeInvoicing" 
+                                data-option="invoicing"
+                            >
+                            <label for="stripeInvoicing">Invoicing Feature (+0.4%)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PayPal Options -->
+            <div id="paypalOptions">
+                <div class="form-group">
+                    <label class="form-label">Payment Type</label>
+                    <select class="form-select" id="paypalPaymentType" data-option="paymentType">
+                        <option value="checkout">PayPal Checkout/Invoices (3.49% + $0.49)</option>
+                        <option value="card">Standard Card (2.99% + $0.49)</option>
+                        <option value="goods">Goods & Services (2.99% flat)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <select class="form-select" id="paypalLocation" data-option="location">
+                        <option value="domestic">Domestic (3.49% + $0.49)</option>
+                        <option value="international">International Cross-Border (+1.50%)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output Results Panel -->
+        <div class="output-panel">
+            <div class="output-item">
+                <div class="output-label">Total Processing Fee</div>
+                <div class="output-value" id="feeOutput">$0.00</div>
+                <button class="copy-button" onclick="copyToClipboard('feeOutput')">📋 Copy</button>
+            </div>
+            <div class="output-item">
+                <div class="output-label" id="netLabel">Net Take-Home Pay</div>
+                <div class="output-value" id="netOutput">$0.00</div>
+                <button class="copy-button" onclick="copyToClipboard('netOutput')">📋 Copy</button>
+            </div>
+            <div class="output-item hidden" id="invoiceItem">
+                <div class="output-label" id="invoiceLabel">Invoice Amount Suggested</div>
+                <div class="output-value" id="invoiceOutput">$0.00</div>
+                <button class="copy-button" onclick="copyToClipboard('invoiceOutput')">📋 Copy</button>
+            </div>
+        </div>
+
+        <!-- AdSense Banner 2 (Responsive) -->
+        <div class="ad-placeholder" style="margin-top: 2rem; min-height: 280px;">
+            <div>Ad Space: Responsive Banner</div>
+            <div style="font-size: 0.75rem; margin-top: 0.5rem;">Google AdSense Responsive Ad Placeholder</div>
+        </div>
+
+        <!-- SEO Content Section -->
+        <div class="content-section">
+            <h2>How to Use This Tool</h2>
+            <ul>
+                <li><strong>Enter Your Amount:</strong> Input the gross payment you'll receive or the net amount you want to walk away with.</li>
+                <li><strong>Select Platform & Options:</strong> Choose between Stripe or PayPal, then customize with location, payment type, and optional features that apply to your situation.</li>
+                <li><strong>Toggle Reverse Mode:</strong> Switch to "Invoice Mode" to calculate exactly what to charge your client so you receive your desired net income after all platform fees.</li>
+            </ul>
+
+            <h2>Understanding Platform Processing Fees</h2>
+            
+            <h3>Stripe Transaction Fees</h3>
+            <p>Stripe is a popular payment processor for global freelancers. Their standard domestic rate is <strong>2.9% + $0.30</strong> per transaction. If you're accepting international payments, Stripe adds an additional <strong>1.5%</strong> currency conversion fee. For businesses using Stripe's invoicing feature directly, there's an extra <strong>0.4%</strong> fee on top of the base processing rate. This tiered approach allows freelancers to understand exactly what they'll pay based on their business model.</p>
+            
+            <h3>PayPal Transaction Fees</h3>
+            <p>PayPal offers multiple payment acceptance methods with varying fee structures. The PayPal Checkout and Invoices tier charges <strong>3.49% + $0.49</strong> per transaction, making it one of the pricier options but popular for its accessibility. The Standard Card rate is <strong>2.99% + $0.49</strong>, offering a middle ground. For sellers primarily using the "Goods and Services" category (typically for digital services and project work), PayPal charges a flat <strong>2.99%</strong> with no additional per-transaction fee. International cross-border payments add an extra <strong>1.50%</strong> to any of these tiers.</p>
+            
+            <h3>Cost Comparison</h3>
+            <p>For a $1,000 payment, Stripe's domestic rate costs approximately $32.90, while PayPal's checkout option costs around $34.90. On larger transactions, these percentage-based fees compound significantly. Using Reverse Invoice Mode helps you pass these exact costs to clients while maintaining your target profit margin.</p>
+
+            <h2>The Reverse Invoice Formula</h2>
+            <p>The "Invoice Mode" uses sophisticated reverse calculation mathematics to ensure you receive your exact target net amount after all platform fees are deducted. Here's the mathematical logic:</p>
+            
+            <p><strong>Standard Calculation (What you earn from a gross payment):</strong></p>
+            <p style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: 'Courier New', monospace; margin: 1rem 0;">
+                Fee = (Gross × Percentage) + FixedFee<br>
+                Net = Gross − Fee
+            </p>
+
+            <p><strong>Reverse Calculation (What to invoice to keep a target net):</strong></p>
+            <p style="background: #f3f4f6; padding: 1rem; border-radius: 0.5rem; font-family: 'Courier New', monospace; margin: 1rem 0;">
+                Gross = (TargetNet + FixedFee) / (1 − TotalPercentageAsDecimal)
+            </p>
+
+            <p>For example, if you want to net $1,000 from a PayPal transaction with a 3.49% + $0.49 fee structure, the calculator isolates the Gross variable to determine you need to invoice $1,036.27. This ensures that after PayPal deducts $36.27 in fees, you're left with exactly $1,000.</p>
+
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <div class="faq-question">1. What is the cheapest way to accept freelance payments?</div>
+                <div class="faq-answer">Stripe's domestic rate (2.9% + $0.30) is typically the cheapest for US-based freelancers. If you're in the Goods & Services category on PayPal, their flat 2.99% can be competitive, though you must verify you're eligible for that tier. For international payments, both platforms add currency conversion premiums, so comparing specific rates based on your location is essential. This calculator helps you see exact costs for your situation.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">2. Who pays the Stripe (or PayPal) transaction fee—the client or the freelancer?</div>
+                <div class="faq-answer">Platform transaction fees are deducted from the freelancer's received amount by default. If you wish to pass the fee entirely to your client (ensuring you receive the full invoice amount), use the Reverse Invoice Mode to calculate what to charge. This shifts the cost burden to the client while ensuring your exact target payment. Many contracts explicitly state whether fees are buyer or seller responsibility, so communicate clearly with clients.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">3. How do international currency conversions impact final payout numbers?</div>
+                <div class="faq-answer">Currency conversion fees typically range from 1% to 2% depending on the platform and currency pair. Stripe charges 1% for international conversions, while PayPal's cross-border rate is 1.50%. These fees apply on top of the base transaction percentage, compounding your total cost. For a $1,000 international PayPal payment, you'd pay 3.49% (PayPal) + 1.50% (cross-border) + $0.49 = approximately $50.40 total, leaving you with $949.60. Always account for these in your invoicing strategy.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">4. Can I adjust fees based on my contract terms with clients?</div>
+                <div class="faq-answer">Absolutely. Some freelancers negotiate with clients to split transaction fees, while others build them entirely into their rates. Use this calculator in "Invoice Mode" to determine various cost scenarios. You might invoice different rates to different clients based on whether you're absorbing fees, passing them on, or splitting them. Always document fee arrangements in your contracts to prevent disputes.</div>
+            </div>
+        </div>
+
+        <div style="text-align: center; color: white; padding: 2rem 0; font-size: 0.875rem;">
+            <p>© 2026 Freelance Fee Calculator | Built for Global Freelancers | All calculations performed client-side</p>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let state = {
+            platform: 'paypal',
+            amount: 1000,
+            mode: 'standard', // 'standard' or 'reverse'
+            currency: 'USD',
+            stripeOptions: {
+                location: 'domestic',
+                fx: false,
+                invoicing: false
+            },
+            paypalOptions: {
+                paymentType: 'checkout',
+                location: 'domestic'
+            }
+        };
+
+        // Currency symbols mapping
+        const currencySymbols = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'JPY': '¥',
+            'AUD': 'A$',
+            'CAD': 'C$',
+            'INR': '₹'
+        };
+
+        // Minimum thresholds by platform
+        const minThresholds = {
+            stripe: 0.30,
+            paypal: 0.49
+        };
+
+        // Fee configurations
+        const feeConfigs = {
+            stripe: {
+                domestic: 0.029,
+                international: 0.029 + 0.015,
+                fixed: 0.30,
+                fx: 0.01,
+                invoicing: 0.004
+            },
+            paypal: {
+                checkout: { percentage: 0.0349, fixed: 0.49 },
+                card: { percentage: 0.0299, fixed: 0.49 },
+                goods: { percentage: 0.0299, fixed: 0 },
+                crossBorder: 0.015
+            }
+        };
+
+        // DOM elements
+        const amountInput = document.getElementById('amountInput');
+        const currencySelector = document.getElementById('currencySelector');
+        const currencySymbolSpan = document.getElementById('currencySymbol');
+        const warningMessage = document.getElementById('warningMessage');
+        const modeToggle = document.getElementById('modeToggle');
+        const modeLabel = document.getElementById('modeLabel');
+        const modeDescription = document.getElementById('modeDescription');
+        const platformTabs = document.querySelectorAll('.platform-tab');
+        const stripeOptionsDiv = document.getElementById('stripeOptions');
+        const paypalOptionsDiv = document.getElementById('paypalOptions');
+        const feeOutput = document.getElementById('feeOutput');
+        const netOutput = document.getElementById('netOutput');
+        const invoiceOutput = document.getElementById('invoiceOutput');
+        const invoiceItem = document.getElementById('invoiceItem');
+        const netLabel = document.getElementById('netLabel');
+        const invoiceLabel = document.getElementById('invoiceLabel');
+
+        // Event listeners
+        amountInput.addEventListener('change', sanitizeAndCalculate);
+        amountInput.addEventListener('input', sanitizeAndCalculate);
+        currencySelector.addEventListener('change', (e) => {
+            state.currency = e.target.value;
+            currencySymbolSpan.textContent = currencySymbols[state.currency];
+            calculate();
+        });
+        modeToggle.addEventListener('change', handleModeToggle);
+
+        platformTabs.forEach(tab => {
+            tab.addEventListener('click', () => handlePlatformChange(tab.dataset.platform));
+        });
+
+        // Stripe option listeners
+        document.getElementById('stripeLocation').addEventListener('change', (e) => {
+            state.stripeOptions.location = e.target.value;
+            calculate();
+        });
+
+        document.getElementById('stripeFX').addEventListener('change', (e) => {
+            state.stripeOptions.fx = e.target.checked;
+            calculate();
+        });
+
+        document.getElementById('stripeInvoicing').addEventListener('change', (e) => {
+            state.stripeOptions.invoicing = e.target.checked;
+            calculate();
+        });
+
+        // PayPal option listeners
+        document.getElementById('paypalPaymentType').addEventListener('change', (e) => {
+            state.paypalOptions.paymentType = e.target.value;
+            calculate();
+        });
+
+        document.getElementById('paypalLocation').addEventListener('change', (e) => {
+            state.paypalOptions.location = e.target.value;
+            calculate();
+        });
+
+        // Function: Sanitize input and calculate
+        function sanitizeAndCalculate() {
+            // Remove all non-numeric characters except the decimal point
+            let sanitized = amountInput.value.replace(/[^\d.]/g, '');
+            
+            // Remove extra decimal points (keep only the first one)
+            sanitized = sanitized.replace(/\.(?=.*\.)/g, '');
+            
+            // Update the input value with sanitized version
+            amountInput.value = sanitized;
+            
+            // Calculate
+            calculate();
+        }
+
+        // Function: Handle platform change
+        function handlePlatformChange(platform) {
+            state.platform = platform;
+            
+            platformTabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.platform === platform) {
+                    tab.classList.add('active');
+                }
+            });
+
+            if (platform === 'stripe') {
+                stripeOptionsDiv.style.display = 'block';
+                paypalOptionsDiv.style.display = 'none';
+            } else {
+                stripeOptionsDiv.style.display = 'none';
+                paypalOptionsDiv.style.display = 'block';
+            }
+
+            calculate();
+        }
+
+        // Function: Handle mode toggle
+        function handleModeToggle() {
+            state.mode = modeToggle.checked ? 'reverse' : 'standard';
+            
+            if (state.mode === 'standard') {
+                modeLabel.textContent = 'Standard Mode';
+                modeDescription.textContent = 'Calculate your take-home from a gross payment';
+                netLabel.textContent = 'Net Take-Home Pay';
+                invoiceItem.classList.add('hidden');
+            } else {
+                modeLabel.textContent = 'Invoice Mode';
+                modeDescription.textContent = 'What to invoice to keep your target amount after fees';
+                netLabel.textContent = 'Your Desired Net Income';
+                invoiceLabel.textContent = 'Total Amount to Invoice Client';
+                invoiceItem.classList.remove('hidden');
+            }
+
+            calculate();
+        }
+
+        // Function: Calculate fees and amounts
+        function calculate() {
+            state.amount = parseFloat(amountInput.value) || 0;
+            updateWarning();
+
+            let fee, net, invoice;
+
+            if (state.platform === 'stripe') {
+                const result = calculateStripe();
+                fee = result.fee;
+                net = result.net;
+                invoice = result.invoice;
+            } else {
+                const result = calculatePayPal();
+                fee = result.fee;
+                net = result.net;
+                invoice = result.invoice;
+            }
+
+            // Update display
+            feeOutput.textContent = formatCurrency(fee);
+            netOutput.textContent = formatCurrency(net);
+            invoiceOutput.textContent = formatCurrency(invoice);
+        }
+
+        // Function: Calculate Stripe fees
+        function calculateStripe() {
+            let percentage = feeConfigs.stripe.domestic;
+
+            if (state.stripeOptions.location === 'international') {
+                percentage = feeConfigs.stripe.international;
+            }
+
+            if (state.stripeOptions.fx) {
+                percentage += feeConfigs.stripe.fx;
+            }
+
+            if (state.stripeOptions.invoicing) {
+                percentage += feeConfigs.stripe.invoicing;
+            }
+
+            const fixed = feeConfigs.stripe.fixed;
+
+            if (state.mode === 'standard') {
+                const fee = (state.amount * percentage) + fixed;
+                let net = state.amount - fee;
+                
+                const result = ensureNonNegative(fee, net);
+                
+                return {
+                    fee: result.fee,
+                    net: result.net,
+                    invoice: state.amount
+                };
+            } else {
+                // Reverse mode
+                const targetNet = state.amount;
+                const gross = (targetNet + fixed) / (1 - percentage);
+                const fee = gross - targetNet;
+                return {
+                    fee: fee,
+                    net: targetNet,
+                    invoice: gross
+                };
+            }
+        }
+
+        // Function: Calculate PayPal fees
+        function calculatePayPal() {
+            let basePercentage = 0;
+            let baseFixed = 0;
+
+            const paymentType = state.paypalOptions.paymentType;
+            basePercentage = feeConfigs.paypal[paymentType].percentage;
+            baseFixed = feeConfigs.paypal[paymentType].fixed;
+
+            if (state.paypalOptions.location === 'international') {
+                basePercentage += feeConfigs.paypal.crossBorder;
+            }
+
+            if (state.mode === 'standard') {
+                const fee = (state.amount * basePercentage) + baseFixed;
+                let net = state.amount - fee;
+                
+                const result = ensureNonNegative(fee, net);
+                
+                return {
+                    fee: result.fee,
+                    net: result.net,
+                    invoice: state.amount
+                };
+            } else {
+                // Reverse mode
+                const targetNet = state.amount;
+                const gross = (targetNet + baseFixed) / (1 - basePercentage);
+                const fee = gross - targetNet;
+                return {
+                    fee: fee,
+                    net: targetNet,
+                    invoice: gross
+                };
+            }
+        }
+
+        // Function: Format currency
+        function formatCurrency(value) {
+            const symbol = currencySymbols[state.currency];
+            return symbol + parseFloat(value).toFixed(2);
+        }
+
+        // Function: Copy to clipboard
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            }).catch(() => {
+                alert('Failed to copy to clipboard');
+            });
+        }
+
+        // Function: Update warning message
+        function updateWarning() {
+            const minThreshold = state.platform === 'stripe' ? minThresholds.stripe : minThresholds.paypal;
+            
+            if (state.amount > 0 && state.amount < minThreshold) {
+                warningMessage.textContent = `⚠️ Amount must be at least ${formatCurrency(minThreshold)} to cover baseline platform fees.`;
+                warningMessage.classList.add('show');
+            } else {
+                warningMessage.classList.remove('show');
+            }
+        }
+
+        // Function: Ensure non-negative net payout
+        function ensureNonNegative(fee, net) {
+            if (net < 0) {
+                return {
+                    fee: state.amount,
+                    net: 0
+                };
+            }
+            return { fee, net };
+        }
+
+        // Initial calculation
+        calculate();
+    </script>
+</body>
+</html>

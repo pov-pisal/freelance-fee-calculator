@@ -1,0 +1,22 @@
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+.env
+.env.local
+
+# Dependencies (if needed in future)
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
